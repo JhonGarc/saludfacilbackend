@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model cita_medica {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paciente_id      String?            @db.Uuid
+  doctor_id        String?            @db.Uuid
+  fecha            DateTime           @db.Date
+  hora             DateTime           @db.Time(6)
+  modalidad        String?            @db.VarChar(20)
+  ubicacion        String?
+  estado           String?            @db.VarChar(20)
+  doctor           doctor?            @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario          usuario?           @relation(fields: [paciente_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  historial_medico historial_medico[]
+}
+
+model doctor {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre_completo   String             @db.VarChar(100)
+  email             String             @unique @db.VarChar(100)
+  telefono          String?            @db.VarChar(20)
+  especialidad_id   Int?
+  biografia         String?
+  anios_experiencia Int?
+  cita_medica       cita_medica[]
+  especialidad      especialidad?      @relation(fields: [especialidad_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  historial_medico  historial_medico[]
+}
+
+model especialidad {
+  id     Int      @id @default(autoincrement())
+  nombre String   @db.VarChar(100)
+  doctor doctor[]
+}
+
+model historial_medico {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paciente_id    String?      @db.Uuid
+  doctor_id      String?      @db.Uuid
+  cita_id        String?      @db.Uuid
+  notas_medicas  String?
+  fecha_registro DateTime?    @default(now()) @db.Timestamp(6)
+  cita_medica    cita_medica? @relation(fields: [cita_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  doctor         doctor?      @relation(fields: [doctor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario        usuario?     @relation(fields: [paciente_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model usuario {
+  id               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nombre_completo  String             @db.VarChar(100)
+  email            String             @unique @db.VarChar(100)
+  telefono         String?            @db.VarChar(20)
+  fecha_nacimiento DateTime?          @db.Date
+  genero           String?            @db.VarChar(10)
+  grupo_sanguineo  String?            @db.VarChar(3)
+  password_hash    String?
+  cita_medica      cita_medica[]
+  historial_medico historial_medico[]
+}
